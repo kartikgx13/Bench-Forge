@@ -6,6 +6,7 @@ import BenchmarkRunner from "./components/BenchmarkRunner"
 import InstalledModelsSelector from "./components/InstalledModelsSelector"
 import OtherModels from "./components/OtherModels"
 import { Toaster } from "react-hot-toast"
+import SinglePromptTester from "./components/SinglePromptTester"
 
 function App() {
 
@@ -55,6 +56,7 @@ function App() {
 />
 
 <BenchmarkRunner selectedModels={selectedModels} />
+<SinglePromptTester refreshTrigger={modelRefresh} />
   </div>
 
 </div>

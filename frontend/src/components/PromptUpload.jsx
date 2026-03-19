@@ -46,7 +46,7 @@ function PromptUpload() {
     <div className="bg-gray-900 border border-gray-800 rounded-xl p-6">
 
       <h2 className="text-xl font-semibold mb-4 text-gray-200">
-        Upload Test Prompts
+        Upload text file and test multiple prompts
       </h2>
 
       <div className="flex items-center gap-4">

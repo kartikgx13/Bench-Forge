@@ -3,6 +3,7 @@ from contextlib import asynccontextmanager
 from routers.models_router import router as models_router
 from routers.prompts_router import router as prompts_router
 from routers.benchmark_route import router as benchmark_router
+from routers.prompt_test_router import router as prompt_test_router
 from services.ollama_services import check_ollama_health
 from utils.startup import setup_ollama
 from fastapi.middleware.cors import CORSMiddleware
@@ -45,3 +46,4 @@ def health():
 app.include_router(models_router)
 app.include_router(prompts_router)
 app.include_router(benchmark_router)
+app.include_router(prompt_test_router)

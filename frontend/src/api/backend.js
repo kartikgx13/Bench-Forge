@@ -47,4 +47,11 @@ export async function validateModel(model) {
 
 }
 
+export async function testPrompt(model, prompt) {
+  return axios.post("http://127.0.0.1:8000/prompt/test", {
+    model,
+    prompt
+  })
+}
+
 export const healthCheck = () => API.get("/health")
