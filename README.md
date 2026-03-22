@@ -1,163 +1,229 @@
-LLM Benchmarking App
+# ⚒️ BenchForge — LLM Benchmarking Studio
 
-A lightweight benchmarking tool designed to evaluate the performance of locally running Large Language Models (LLMs). This project allows developers to compare different models across key performance metrics to better understand their speed and efficiency during inference.
+**BenchForge** is a modern web application to **test, compare, and benchmark Large Language Models (LLMs)** locally using real-world prompts.
 
-This tool is especially useful when working with local LLMs through Ollama or other local inference frameworks, helping developers choose the best model for their applications.
+> ⚡ Forge insights. Compare models. Optimize performance.
 
-Features
+---
 
-Benchmark multiple LLMs
+## 🚀 Features
 
-Measure important performance metrics
+### 🔹 Model Management
 
-Compare different models easily
+* View **installed + popular models**
+* Download models with **live progress tracking**
+* Cancel downloads in real-time
+* Delete models easily
 
-Lightweight and simple to run
+---
 
-Easily extendable for additional models
+### 🔹 Single Prompt Testing
 
-Metrics Measured
+* Quickly test a single prompt across models
+* Ideal for **quick comparisons and debugging**
 
-The benchmarking tool records the following metrics:
+---
 
-Average Latency
+### 🔹 Benchmark Runner (Core Feature)
 
-Average time taken by the model to generate a response.
+Run structured benchmarks across multiple prompts and models:
 
-TTFT (Time To First Token)
+1. Upload prompt file (`.txt`)
+2. Select installed models
+3. Run benchmark
 
-Measures how quickly the model begins generating output after receiving the prompt.
+---
 
-Tokens Per Second
+### 📊 Metrics Captured
 
-Speed of token generation during response generation.
+* ⏱️ **Latency**
+* ⚡ **Time to First Token (TTFT)**
+* 🔢 **Tokens per second**
 
-Total Time Taken
+---
 
-Total time required to complete the full response.
+### 📈 Visualization & Export
 
-Supported Models
+* Interactive charts for comparison
+* Export results as:
 
-The tool can benchmark any locally running model. Example models tested include:
+  * CSV
+  * JSON
 
-llama3.2
+---
 
-mistral
+## 🧱 Tech Stack
 
-phi
+### Frontend
 
-Additional models can easily be added.
+* React (Vite)
+* Tailwind CSS
+* Lucide Icons
+* React Hot Toast
 
-Project Structure
-LLM-Benchmarking-App
-│
-├── benchmarking
-│   ├── benchmark_model.py
-│   ├── model_comparison.py
-│
-├── structured_output
-│   ├── schema.py
-│
-├── results
-│   ├── benchmark_results.csv
-│
-├── README.md
-└── requirements.txt
-Installation
-1 Clone the repository
-git clone https://github.com/Kartikg13/LLM-Benchmarking-APP.git
-cd LLM-Benchmarking-APP
-2 Create virtual environment
-python -m venv .venv
+### Backend
 
-Activate environment:
+* FastAPI (Python)
+* Server-Sent Events (SSE)
+* Ollama API
 
-Mac / Linux
+---
 
-source .venv/bin/activate
+## ⚙️ Installation
 
-Windows
+### 1️⃣ Clone Repository
 
-.venv\Scripts\activate
-3 Install dependencies
+```bash
+git clone https://github.com/your-username/benchforge.git
+cd benchforge
+```
+
+---
+
+### 2️⃣ Backend Setup
+
+```bash
+cd backend
 pip install -r requirements.txt
-Running the Benchmark
+uvicorn main:app --reload
+```
 
-Run the model comparison script:
+Runs on:
 
-python benchmarking/model_comparison.py
+```
+http://127.0.0.1:8000
+```
 
-The script will run inference across all configured models and record performance metrics.
+---
 
-Example Output
-Benchmark Results
+### 3️⃣ Install Ollama
 
-Model        Average Latency    TTFT    Tokens/sec    Total Time
----------------------------------------------------------------
-llama3.2     12.37              0.33        30.73        123.76
-mistral      18.53              0.62        13.08        185.39
-phi          9.42               0.28        35.10        94.20
-How It Works
+Download:
+👉 https://ollama.com
 
-A prompt is sent to the selected model
+Start server:
 
-The response stream is monitored
+```bash
+ollama serve
+```
 
-Timing metrics are recorded
+---
 
-Results are aggregated across multiple runs
+### 4️⃣ Frontend Setup
 
-Final performance statistics are displayed
+```bash
+cd frontend
+npm install
+npm run dev
+```
 
-Use Cases
+Runs on:
 
-This project is useful for:
+```
+http://localhost:5173
+```
 
-Evaluating local LLM performance
+---
 
-Comparing models before deploying them
+## 📂 Project Structure
 
-Optimizing AI assistants
+```
+benchforge/
+│
+├── backend/
+│   ├── routes/
+│   ├── services/
+│   └── main.py
+│
+├── frontend/
+│   ├── components/
+│   ├── api/
+│   └── App.jsx
+│
+└── README.md
+```
 
-Benchmarking inference speed
+---
 
-Testing hardware performance with LLMs
+## 🔄 How It Works
 
-Future Improvements
+### 🔹 Model Download
 
-Possible improvements include:
+* Uses Ollama `/api/pull`
+* Streams progress via SSE
 
-GPU utilization tracking
+---
 
-Memory usage benchmarking
+### 🔹 Benchmark Flow
 
-Visualization dashboards
+1. Upload prompts
+2. Models run sequentially
+3. Metrics collected
+4. Results streamed in real-time
 
-Benchmark result graphs
+---
 
-Web interface for running benchmarks
+### 🔹 Real-Time Streaming
 
-Automatic model discovery
+BenchForge uses **SSE (Server-Sent Events)** to:
 
-Contributing
+* Track model download progress
+* Stream benchmark execution updates
 
-Contributions are welcome.
+---
 
-If you would like to improve the project:
+## 🧠 Design Philosophy
 
-1 Fork the repository
-2 Create a new branch
-3 Submit a pull request
+* **Task-driven UI** → Focus on workflows, not features
+* **Real-time feedback** → No blind waiting
+* **Local-first** → Privacy-friendly, no cloud dependency
+* **Developer-first** → Transparent and simple
 
-License
+---
 
-This project is licensed under the MIT License.
+## ⚠️ Known Limitations
 
-Author
+* Ollama does not provide a direct model validation API
+* Validation occurs during download
+* Single benchmark execution at a time
 
-Kartik Gavande
+---
 
-GitHub
-https://github.com/kartikgx13
+## 🚀 Future Roadmap
 
-⭐ If you find this project useful, consider starring the repository.
+* 🔍 Model search + autocomplete
+* 📦 Download queue system
+* 📊 Benchmark history
+* ⚡ Parallel benchmarking
+* 🧠 Smart model recommendations
+
+---
+
+## 🤝 Contributing
+
+```bash
+git checkout -b feature/your-feature
+git commit -m "Add feature"
+git push origin feature/your-feature
+```
+
+Pull requests are welcome!
+
+---
+
+## 📜 License
+
+MIT License
+
+---
+
+## 👨‍💻 Author
+
+**Kartik Gavande**
+
+---
+
+## ⭐ Support
+
+If you like BenchForge, consider giving it a star ⭐
+It helps a lot!
