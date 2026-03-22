@@ -6,9 +6,17 @@
 
 ---
 
+## 📸 Preview
+
+![BenchForge](./frontend/public/assets/screenshots/model-manager.png)
+
+---
+
 ## 🚀 Features
 
 ### 🔹 Model Management
+
+![Model Manager](./frontend/public/assets/screenshots/model-manager.png)
 
 * View **installed + popular models**
 * Download models with **live progress tracking**
@@ -17,7 +25,21 @@
 
 ---
 
+### 🔹 Search & Download Models
+
+![Search Models](./frontend/public/assets/screenshots/search-model.png)
+
+* Add and validate models dynamically
+* Real-time download progress with stats
+* Clean UI for managing external models
+
+---
+
 ### 🔹 Single Prompt Testing
+
+![Single Prompt](./frontend/public/assets/screenshots/single-prompt.png)
+
+![Single Prompt Response](./frontend/public/assets/screenshots/single-prompt-ans.png)
 
 * Quickly test a single prompt across models
 * Ideal for **quick comparisons and debugging**
@@ -25,6 +47,12 @@
 ---
 
 ### 🔹 Benchmark Runner (Core Feature)
+
+![Upload Prompts](./frontend/public/assets/screenshots/upload-prompt.png)
+
+![Select Models](./frontend/public/assets/screenshots/select-models.png)
+
+![Benchmark Results](./frontend/public/assets/screenshots/results-latency.png)
 
 Run structured benchmarks across multiple prompts and models:
 
@@ -36,6 +64,12 @@ Run structured benchmarks across multiple prompts and models:
 
 ### 📊 Metrics Captured
 
+![Latency](./frontend/public/assets/screenshots/results-latency.png)
+
+![Tokens/sec](./frontend/public/assets/screenshots/results-token-speed.png)
+
+![Export View](./frontend/public/assets/screenshots/results-latency.png)
+
 * ⏱️ **Latency**
 * ⚡ **Time to First Token (TTFT)**
 * 🔢 **Tokens per second**
@@ -43,6 +77,8 @@ Run structured benchmarks across multiple prompts and models:
 ---
 
 ### 📈 Visualization & Export
+
+![TTFT](./frontend/public/assets/screenshots/results-ttft.png)
 
 * Interactive charts for comparison
 * Export results as:
