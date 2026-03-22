@@ -6,6 +6,8 @@ from config import TOP_MODELS
 import requests
 from fastapi import HTTPException
 
+active_downloads = {}
+
 router = APIRouter()
 
 #route to get the models list
@@ -74,19 +76,41 @@ def download_model_stream(model: str):
             stream=True
         )
 
-        for line in response.iter_lines():
+        active_downloads[model] = response
 
-            if not line:
-                continue
+        try:
+            for line in response.iter_lines():
 
-            try:
+                if not line:
+                    continue
+
                 chunk = json.loads(line.decode("utf-8"))
                 yield f"data: {json.dumps(chunk)}\n\n"
 
-            except:
-                continue
+        except GeneratorExit:
+            print(f"Client disconnected: {model}")
+
+        finally:
+            # cleanup
+            if model in active_downloads:
+                del active_downloads[model]
 
     return StreamingResponse(stream(), media_type="text/event-stream")
+
+@router.post("/models/cancel")
+def cancel_download(model: str):
+
+    if model in active_downloads:
+        try:
+            active_downloads[model].close()
+        except:
+            pass
+
+        del active_downloads[model]
+
+        return {"message": f"{model} download cancelled"}
+
+    return {"message": "No active download found"}
 
 @router.get("/models/validate")
 def validate_model(model: str):
@@ -96,7 +120,7 @@ def validate_model(model: str):
             "http://localhost:11434/api/pull",
             json={"name": model},
             stream=True,
-            timeout=5
+            timeout=10
         )
 
         for line in res.iter_lines():
@@ -106,12 +130,12 @@ def validate_model(model: str):
 
             chunk = json.loads(line.decode("utf-8"))
 
-            # ❌ model does not exist
+            # ❌ invalid model
             if "error" in chunk:
                 return {"valid": False}
 
-            # only accept this specific status
-            if chunk.get("status") == "pulling manifest":
+            # ✅ only accept AFTER manifest is confirmed
+            if chunk.get("status") == "pulling layers":
                 return {"valid": True}
 
     except Exception:

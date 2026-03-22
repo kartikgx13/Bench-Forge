@@ -1,14 +1,11 @@
 import { useState } from "react"
-import { Download, Plus } from "lucide-react"
+import { Plus, Search } from "lucide-react"
 import toast from "react-hot-toast"
-import { validateModel } from "../api/backend"
 
-function OtherModels({refreshModels}) {
+function OtherModels({ refreshModels }) {
 
-  const [models, setModels] = useState([])
   const [inputModel, setInputModel] = useState("")
-  const [downloadProgress, setDownloadProgress] = useState({})
-  const [downloadStats, setDownloadStats] = useState({})
+  const [activeDownload, setActiveDownload] = useState(null)
 
   const formatGB = (bytes) => {
     return (bytes / (1024 ** 3)).toFixed(2)
@@ -16,103 +13,64 @@ function OtherModels({refreshModels}) {
 
   const addModel = async () => {
 
-  const model = inputModel.trim()
-
-  if (!model) return
-
-  if (models.includes(model)) {
-    toast.error("Model already added")
-    return
-  }
-
-  try {
-
-    const res = await validateModel(model)
-
-    if (!res.data.valid) {
-      toast.error(`Model "${model}" does not exist on Ollama`)
-      return
-    }
-
-    // Only add card if valid
-    setModels(prev => [...prev, model])
+    const model = inputModel.trim()
+    if (!model) return
 
     setInputModel("")
 
-  } catch {
+    // ✅ show "starting" state (no fake progress)
+    setActiveDownload({
+      name: model,
+      progress: 0,
+      status: "starting"
+    })
 
-    toast.error("Failed to validate model")
-
+    startDownload(model)
   }
 
-}
-
-  const handleDownload = (model) => {
+  const startDownload = (model) => {
 
     const source = new EventSource(
       `http://127.0.0.1:8000/models/download-stream?model=${model}`
     )
 
-source.onmessage = (event) => {
+    source.onmessage = (event) => {
 
-  const data = JSON.parse(event.data)
+      const data = JSON.parse(event.data)
 
-  // ❌ Invalid model
-  if (data.error) {
-
-    toast.error(`Model "${model}" does not exist on Ollama`)
-
-    source.close()
-
-    // remove card
-    setModels(prev => prev.filter(m => m !== model))
-
-    return
-  }
-
-  // progress updates
-  if (data.completed && data.total) {
-
-    const percent = Math.floor(
-      (data.completed / data.total) * 100
-    )
-
-    setDownloadProgress(prev => ({
-      ...prev,
-      [model]: percent
-    }))
-
-    setDownloadStats(prev => ({
-      ...prev,
-      [model]: {
-        completed: formatGB(data.completed),
-        total: formatGB(data.total)
+      // ❌ invalid model
+      if (data.error) {
+        toast.error(`Model "${model}" does not exist`)
+        source.close()
+        setActiveDownload(null)
+        return
       }
-    }))
-  }
 
-  // success
-  if (data.status === "success") {
+      // ✅ progress updates
+      if (data.completed && data.total) {
 
-    source.close()
+        const percent = Math.floor(
+          (data.completed / data.total) * 100
+        )
 
-    setModels(prev => prev.filter(m => m !== model))
+        setActiveDownload({
+          name: model,
+          progress: percent,
+          completed: formatGB(data.completed),
+          total: formatGB(data.total)
+        })
+      }
 
-    setDownloadProgress(prev => {
-      const updated = { ...prev }
-      delete updated[model]
-      return updated
-    })
+      // ✅ success
+      if (data.status === "success") {
+        source.close()
 
-    setDownloadStats(prev => {
-      const updated = { ...prev }
-      delete updated[model]
-      return updated
-    })
+        toast.success(`Model ${model} downloaded successfully`)
 
-    refreshModels()
-  }
-}
+        setActiveDownload(null)
+        refreshModels()
+      }
+    }
   }
 
   return (
@@ -120,88 +78,72 @@ source.onmessage = (event) => {
     <div className="mt-10">
 
       <h2 className="text-2xl font-semibold mb-6 text-gray-200">
-        Other Models
+        Search Models
       </h2>
 
-      {/* Input section */}
+      {/* Fixed width container */}
+      <div className="w-[420px]">
 
-      <div className="flex gap-3 mb-6">
+        {/* Input section */}
+        <div className="flex gap-3 mb-4">
 
-        <input
-          type="text"
-          placeholder="Enter Ollama model name (ex: qwen2.5)"
-          value={inputModel}
-          onChange={(e) => setInputModel(e.target.value)}
-          className="bg-gray-900 border border-gray-700 rounded-lg px-4 py-2 text-gray-200 w-80"
-        />
+    <input
+      type="text"
+      placeholder="Enter Ollama model name (ex: qwen2.5)"
+      value={inputModel}
+      onChange={(e) => setInputModel(e.target.value)}
+      className="bg-gray-900 border border-gray-700 rounded-lg px-4 py-2 text-gray-200 flex-1 min-w-0"
+    />
 
-        <button
-          onClick={addModel}
-          className="flex items-center gap-2 bg-purple-600 hover:bg-purple-500 px-4 py-2 rounded-lg"
-        >
-          <Plus size={16}/>
-          Add Model
-        </button>
+    <button
+      onClick={addModel}
+      disabled={activeDownload !== null}
+      className="flex items-center gap-2 bg-purple-600 hover:bg-purple-500 px-4 py-2 rounded-lg disabled:opacity-50 whitespace-nowrap"
+    >
+      <Plus size={16}/>
+      Add Model
+    </button>
 
-      </div>
+  </div>
 
-      {/* Model cards */}
+        {/* Active Download UI */}
+        {activeDownload && (
 
-      <div className="flex gap-6 overflow-x-auto py-4 px-4">
+          <div className="bg-gray-900 border border-gray-800 rounded-xl p-4 w-full">
 
-        {models.map((model) => (
+            <div className="flex justify-between text-sm mb-2 text-gray-200">
+              <span>{activeDownload.name}</span>
 
-          <div
-            key={model}
-            className="min-w-[300px] bg-gray-900 border border-gray-800 rounded-xl p-5 flex flex-col gap-4"
-          >
+              <span>
+                {activeDownload.status === "starting"
+                  ? "Checking Model..."
+                  : `${activeDownload.progress}%`}
+              </span>
+            </div>
 
-            <h3 className="text-lg font-semibold">
-              {model}
-            </h3>
+            <div className="w-full bg-gray-800 rounded-full h-3">
 
-            {downloadProgress[model] !== undefined ? (
+              <div
+                className="bg-purple-500 h-3 rounded-full transition-all duration-300"
+                style={{
+                  width:
+                    activeDownload.status === "starting"
+                      ? "5%"
+                      : `${activeDownload.progress}%`
+                }}
+              />
 
-              <div>
+            </div>
 
-                <div className="w-full bg-gray-800 rounded-full h-3">
-
-                  <div
-                    className="bg-purple-500 h-3 rounded-full transition-all duration-300"
-                    style={{
-                      width: `${downloadProgress[model]}%`
-                    }}
-                  />
-
-                </div>
-
-                <p className="text-xs text-gray-400 mt-1 text-center">
-
-                  Downloading... {downloadProgress[model]}%
-
-                  {downloadStats[model] && (
-                    <> • {downloadStats[model].completed}GB / {downloadStats[model].total}GB</>
-                  )}
-
-                </p>
-
-              </div>
-
-            ) : (
-
-              <button
-                onClick={() => handleDownload(model)}
-                className="flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-500 py-2 rounded-lg"
-              >
-                <Download size={16}/>
-                Download Model
-              </button>
-
+            {activeDownload.completed && (
+              <p className="text-xs text-gray-400 mt-1 text-center">
+                {activeDownload.completed}GB / {activeDownload.total}GB
+              </p>
             )}
 
           </div>
 
-        ))}
+        )}
 
       </div>
 

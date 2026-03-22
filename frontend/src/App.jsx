@@ -30,14 +30,44 @@ function App() {
   <div className="max-w-6xl mx-auto p-8">
 
     <h1 className="text-4xl font-bold mb-8 text-white">
-      LLM Benchmarking App
+      Bench Forge
     </h1>
 <ModelManager refreshTrigger={modelRefresh} />
 
 <OtherModels refreshModels={refreshModels} />
-
+<div className="my-8 border-t border-gray-700"></div>
 
 <SinglePromptTester refreshTrigger={modelRefresh} />
+
+<div className="flex items-center my-12">
+  <div className="flex-grow border-t border-gray-700"></div>
+
+<span className="mx-6 text-3xl font-extrabold text-purple-400 tracking-widest">
+  OR
+</span>
+
+  <div className="flex-grow border-t border-gray-700"></div>
+</div>
+
+<div className="mt-12 bg-gray-900 border border-gray-800 rounded-2xl p-8">
+
+  <h2 className="text-2xl font-bold text-gray-200 mb-8">
+    🧪 Benchmark Runner (Test Multiple Prompts)
+  </h2>
+
+  <PromptUpload />
+  <div className="border-t border-gray-800 my-8"></div>
+
+  <InstalledModelsSelector
+  selectedModels={selectedModels}
+  setSelectedModels={setSelectedModels}
+  refreshTrigger={modelRefresh}
+/>
+  <div className="border-t border-gray-800 my-8"></div>
+
+  <BenchmarkRunner selectedModels={selectedModels} />
+
+</div>
 
 <Toaster
     position="top-right"
@@ -48,17 +78,6 @@ function App() {
       },
     }}
   />
-
-<div className="mt-12">
-  <PromptUpload />
-</div>
-
-<InstalledModelsSelector
-  selectedModels={selectedModels}
-  setSelectedModels={setSelectedModels}
-/>
-
-<BenchmarkRunner selectedModels={selectedModels} />
   </div>
 
 </div>

@@ -2,11 +2,12 @@ import { useEffect, useState } from "react"
 import { getModels, deleteModel } from "../api/backend"
 import { Download, Trash } from "lucide-react"
 
-function ModelManager({refreshTrigger}) {
+function ModelManager({ refreshTrigger }) {
 
   const [models, setModels] = useState([])
   const [downloadProgress, setDownloadProgress] = useState({})
   const [downloadStats, setDownloadStats] = useState({})
+  const [sources, setSources] = useState({})
 
   const fetchModels = async () => {
     const res = await getModels()
@@ -14,8 +15,8 @@ function ModelManager({refreshTrigger}) {
   }
 
   useEffect(() => {
-  fetchModels()
-}, [refreshTrigger])
+    fetchModels()
+  }, [refreshTrigger])
 
   const formatGB = (bytes) => {
     return (bytes / (1024 ** 3)).toFixed(2)
@@ -27,12 +28,15 @@ function ModelManager({refreshTrigger}) {
       `http://127.0.0.1:8000/models/download-stream?model=${model}`
     )
 
-    source.onmessage = (event) => {
+    setSources(prev => ({
+      ...prev,
+      [model]: source
+    }))
 
+    source.onmessage = (event) => {
       const data = JSON.parse(event.data)
 
       if (data.completed && data.total) {
-
         const percent = Math.floor(
           (data.completed / data.total) * 100
         )
@@ -52,16 +56,9 @@ function ModelManager({refreshTrigger}) {
       }
 
       if (data.status === "success") {
-
         source.close()
 
-        setDownloadProgress(prev => {
-          const updated = { ...prev }
-          delete updated[model]
-          return updated
-        })
-
-        setDownloadStats(prev => {
+        setSources(prev => {
           const updated = { ...prev }
           delete updated[model]
           return updated
@@ -70,6 +67,23 @@ function ModelManager({refreshTrigger}) {
         fetchModels()
       }
     }
+  }
+
+  const handleCancel = async (model) => {
+
+    if (sources[model]) {
+      sources[model].close()
+    }
+
+    await fetch(`http://127.0.0.1:8000/models/cancel?model=${model}`, {
+      method: "POST"
+    })
+
+    setDownloadProgress(prev => {
+      const updated = { ...prev }
+      delete updated[model]
+      return updated
+    })
   }
 
   const handleDelete = async (model) => {
@@ -81,33 +95,78 @@ function ModelManager({refreshTrigger}) {
     if (!confirmDelete) return
 
     try {
-
       await deleteModel(model)
-
       fetchModels()
-
     } catch {
-
       alert("Failed to delete model")
-
     }
   }
+
+  // 🔥 Split models
+  const installedModels = models.filter(m => m.installed)
+  const availableModels = models.filter(m => !m.installed)
 
   return (
 
     <div className="mt-10">
 
       <h2 className="text-2xl font-semibold mb-6 text-gray-200">
-        Models (Popular + Installed)
+        Models
       </h2>
 
-      <div className="flex gap-6 overflow-x-auto py-4 px-4 scroll-smooth">
+      {/* ✅ Installed Models */}
+      {installedModels.length > 0 && (
+        <>
+          <h3 className="text-lg text-gray-300 mb-3">Installed</h3>
 
-        {models.map((model) => (
+          <div className="grid grid-cols-3 gap-4">
+
+            {installedModels.map((model) => (
+
+              <div
+                key={model.name}
+                className="bg-gradient-to-br from-gray-900 to-gray-800 border border-gray-800 rounded-xl p-5 flex flex-col gap-3 hover:scale-[1.03] hover:shadow-xl hover:shadow-purple-500/10 transition"
+              >
+
+                <div className="flex justify-between items-center">
+                  <h3 className="text-lg font-semibold">{model.name}</h3>
+
+                  <span className="flex items-center gap-2 text-sm text-green-400">
+                    <span className="w-2 h-2 bg-green-400 rounded-full"></span>
+                    Ready
+                  </span>
+                </div>
+
+                <p className="text-xs text-gray-400">
+                  Installed locally
+                </p>
+
+                <button
+                  onClick={() => handleDelete(model.full_name)}
+                  className="flex items-center justify-center gap-2 bg-red-600 hover:bg-red-500 text-white py-2 rounded-lg transition"
+                >
+                  <Trash size={16} />
+                  Remove
+                </button>
+
+              </div>
+
+            ))}
+
+          </div>
+        </>
+      )}
+
+      {/* ✅ Available Models */}
+      <h3 className="text-lg text-gray-300 mt-8 mb-3">Explore Models</h3>
+
+      <div className="flex gap-6 overflow-x-auto snap-x snap-mandatory py-4 px-2 no-scrollbar">
+
+        {availableModels.map((model) => (
 
           <div
             key={model.name}
-            className="min-w-[300px] bg-gray-900 border border-gray-800 rounded-xl p-5 flex flex-col gap-4 hover:border-gray-600 hover:scale-[1.02] transition"
+            className="snap-start min-w-[300px] bg-gradient-to-br from-gray-900 to-gray-800 border border-gray-800 rounded-xl p-5 flex flex-col gap-3 hover:scale-[1.03] hover:shadow-xl hover:shadow-purple-500/10 transition"
           >
 
             <div className="flex justify-between items-center">
@@ -116,69 +175,49 @@ function ModelManager({refreshTrigger}) {
                 {model.name}
               </h3>
 
-              {model.installed ? (
-                <span className="bg-green-900 text-green-300 px-2 py-1 text-sm rounded">
-                  Installed
-                </span>
-              ) : (
-                <span className="bg-gray-800 text-gray-400 px-2 py-1 text-sm rounded">
-                  Not Installed
-                </span>
-              )}
+              <span className="flex items-center gap-2 text-sm text-gray-400">
+                <span className="w-2 h-2 bg-gray-500 rounded-full"></span>
+                Available
+              </span>
 
             </div>
-
-            {model.installed ? (
-
-              /* DELETE BUTTON */
-
-              <button
-                onClick={() => handleDelete(model.full_name)}
-                className="flex items-center justify-center gap-2 bg-red-600 hover:bg-red-500 text-white py-2 rounded-lg transition cursor-pointer"
-              >
-                <Trash size={16} />
-                Delete Model
-              </button>
-
-            ) : downloadProgress[model.name] !== undefined ? (
-
-              /* PROGRESS BAR */
+            {downloadProgress[model.name] !== undefined ? (
 
               <div>
 
                 <div className="w-full bg-gray-800 rounded-full h-3">
-
                   <div
                     className="bg-purple-500 h-3 rounded-full transition-all duration-300"
                     style={{
                       width: `${downloadProgress[model.name]}%`
                     }}
                   />
-
                 </div>
 
                 <p className="text-xs text-gray-400 mt-1 text-center">
-
-                  Downloading... {downloadProgress[model.name]}%
-
+                  {downloadProgress[model.name]}%
                   {downloadStats[model.name] && (
                     <> • {downloadStats[model.name].completed}GB / {downloadStats[model.name].total}GB</>
                   )}
-
                 </p>
+
+                <button
+                  onClick={() => handleCancel(model.name)}
+                  className="mt-2 w-full bg-yellow-600 hover:bg-yellow-500 text-white py-2 rounded-lg"
+                >
+                  Cancel
+                </button>
 
               </div>
 
             ) : (
 
-              /* DOWNLOAD BUTTON */
-
               <button
                 onClick={() => handleDownload(model.name)}
-                className="flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-500 text-white py-2 rounded-lg transition cursor-pointer"
+                className="flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-500 text-white py-2 rounded-lg transition"
               >
                 <Download size={16} />
-                Download Model
+                Download
               </button>
 
             )}

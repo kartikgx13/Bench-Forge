@@ -1,9 +1,8 @@
 import { useRef, useState } from "react"
 import { uploadPrompts } from "../api/backend"
-import { Download, Upload, Play, RotateCcw, FileDown } from "lucide-react"
+import { Upload } from "lucide-react"
 
-
-function PromptUpload() {
+function PromptUpload({ onUploadSuccess }) {
 
   const fileInputRef = useRef(null)
 
@@ -18,11 +17,9 @@ function PromptUpload() {
   const handleFileChange = async (e) => {
 
     const file = e.target.files[0]
-
     if (!file) return
 
     setFileName(file.name)
-
     setUploading(true)
     setMessage("")
 
@@ -30,12 +27,15 @@ function PromptUpload() {
 
       const res = await uploadPrompts(file)
 
-      setMessage(`Uploaded ${res.data.num_prompts} prompts successfully.`)
+      setMessage(`Uploaded ${res.data.num_prompts} prompts`)
+
+      // ✅ notify parent (IMPORTANT for step flow)
+      if (onUploadSuccess) {
+        onUploadSuccess()
+      }
 
     } catch {
-
       setMessage("Upload failed.")
-
     }
 
     setUploading(false)
@@ -43,26 +43,35 @@ function PromptUpload() {
 
   return (
 
-    <div className="bg-gray-900 border border-gray-800 rounded-xl p-6">
+    <div className="mb-10">
 
-      <h2 className="text-xl font-semibold mb-4 text-gray-200">
-        Upload text file and test multiple prompts
-      </h2>
+      {/* ✅ Step Label */}
+      <h3 className="text-lg font-semibold text-gray-300 mb-2">
+        Step 1 • Upload Prompts
+      </h3>
 
       <div className="flex items-center gap-4">
 
         <button
           onClick={handleClick}
           disabled={uploading}
-  className="flex items-center gap-2 bg-purple-600 hover:bg-purple-500 px-5 py-2 rounded-lg cursor-pointer disabled:opacity-50"
+          className="flex items-center gap-2 bg-purple-600 hover:bg-purple-500 px-6 py-3 text-sm font-medium rounded-lg disabled:opacity-50"
         >
           <Upload size={16} />
-          {uploading ? "Uploading..." : "Upload Prompts"}
+          {uploading ? "Uploading..." : "Upload"}
         </button>
 
+        {/* ✅ File name */}
         {fileName && (
           <span className="text-gray-400 text-sm">
-            Chosen file: {fileName}
+            {fileName}
+          </span>
+        )}
+
+        {/* ✅ Success indicator */}
+        {message && !uploading && (
+          <span className="text-green-400 text-sm">
+            ✓ {message}
           </span>
         )}
 
@@ -75,12 +84,6 @@ function PromptUpload() {
         onChange={handleFileChange}
         className="hidden"
       />
-
-      {message && (
-        <p className="mt-3 text-sm text-gray-400">
-          {message}
-        </p>
-      )}
 
     </div>
   )
